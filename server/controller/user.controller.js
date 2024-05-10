@@ -1,6 +1,6 @@
 const UserModel = require('../model/user.model');
 const bcrypt = require("bcryptjs");
-const generateToken = require('../helper/generateToken')
+const {generateToken} = require('../helper/generateToken')
 
 class UserController {
     static async getUser(req, res, next) {
@@ -10,21 +10,25 @@ class UserController {
     }
     
     static async register(req, res, next) {
-        let { name, email, password } = req.body;
+        let { email, password } = req.body;
         const newUser = new UserModel({
-            name : name,
+            name: 'User',
             email : email,
-            password : password
+            password: password
         });
         
         bcrypt.genSalt(10, (err,salt) => {
             bcrypt.hash(newUser.password, salt, (err,hash) => {
-                if(err) throw err;
+                if(err) {
+                    console.log(err);
+                    res.json({});
+                }
                 newUser.password = hash;
                 newUser.save()
-                    .then(user => res.json(user))
+                    .then(user => {
+                        return res.json(user);
+                    })
                     .catch(err => console.log(err))
-                return res.json(newUser);
             })
         });
     }
@@ -36,13 +40,16 @@ class UserController {
             if (user) {
                 let validate = await validatePassword(password, user);
                 if (validate) {
-                    user.token = generateToken(user._id)
-                    res.status(200).json(user)
+                    res.status(200).json({
+                        _id: user._id,
+                        name: user.name,
+                        token: generateToken(user._id)
+                    })
                 }
                 else res.status(200).json('wrong password')
             } else res.json('user not found')
         } catch (error) {
-            res.staus(400).json(error)
+            res.status(400).json(error)
         }
     }
 
@@ -67,7 +74,7 @@ class UserController {
                 } else res.status(200).json(null)
             } else res.json(null)
         } catch (error) {
-            res.staus(400).json(error)
+            res.status(400).json(error)
         }
     }
 }

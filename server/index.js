@@ -5,6 +5,7 @@ const router = require("./routes/router");
 const mongoose = require("mongoose");
 const db = require("./db/key").mongoURI;
 const cors = require('cors');
+const ChatController = require('./controller/chat.controller');
 
 // const { WebSocketServer } = require("ws");
 // const wss = new WebSocketServer({ port: 8080 });
@@ -33,13 +34,14 @@ app.use(router);
 app.get('/', (req, res) => {
     res.send('masuk')
 })
+
 io.on('connection', (socket) => { // CHAT
-    socket.emit('custom_connect', {
-        message: 'asdadasd'
-    })
-    // socket.on('chat message', (msg) => {
-    //     console.log('message: ' + msg);
-    // });
+    socket.on('send_chat', async (data) => {
+        ChatController.sendChat(data);
+        let respAutoChat = await ChatController.automationChatReply();
+        socket.emit('reply_chat', respAutoChat);
+        console.log(`message sent from userid : ${data.message.userId}`);
+    })  
     console.log('a user connected');
 });
 
